@@ -1,0 +1,205 @@
+{
+  "name": "Recipe: idea to image and video (LLM + Flux Schnell + LTX Video)",
+  "description": "A one-line idea in: Run any LLM (Claude Haiku 4.5) writes the visual prompt, Flux Schnell makes a still and LTX Video makes a clip from it. One POST /run starts all three.",
+  "tags": [
+    "recipe",
+    "pipeline"
+  ],
+  "nodes": [
+    {
+      "id": "idea",
+      "type": "basedNode",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "data": {
+        "label": "Idea",
+        "nodeType": "input:text",
+        "category": "input",
+        "description": "A one-line idea.",
+        "config": {
+          "prompt": "a lighthouse on a cliff at sunrise, waves breaking below"
+        },
+        "params": {
+          "prompt": "a lighthouse on a cliff at sunrise, waves breaking below"
+        },
+        "inputs": [],
+        "outputs": [
+          {
+            "id": "prompt",
+            "type": "TEXT",
+            "label": "Text",
+            "required": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "prompt-rules",
+      "type": "basedNode",
+      "position": {
+        "x": 0,
+        "y": 360
+      },
+      "data": {
+        "label": "Prompt rules",
+        "nodeType": "input:text",
+        "category": "input",
+        "description": "Fixed instructions for the LLM.",
+        "config": {
+          "prompt": "Write one visual prompt for both a still image and a short video of the idea below. One plain paragraph in English, under 60 words: subject, setting, light, one slow camera move. No quotes, no labels, no text or logos in the scene. Idea:"
+        },
+        "params": {
+          "prompt": "Write one visual prompt for both a still image and a short video of the idea below. One plain paragraph in English, under 60 words: subject, setting, light, one slow camera move. No quotes, no labels, no text or logos in the scene. Idea:"
+        },
+        "inputs": [],
+        "outputs": [
+          {
+            "id": "prompt",
+            "type": "TEXT",
+            "label": "Text",
+            "required": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "join",
+      "type": "basedNode",
+      "position": {
+        "x": 520,
+        "y": 200
+      },
+      "data": {
+        "label": "Prompt Concatenator",
+        "nodeType": "utility:prompt_concat",
+        "category": "utility",
+        "description": "Join multiple text inputs to one output",
+        "config": {},
+        "params": {}
+      }
+    },
+    {
+      "id": "prompt-writer",
+      "type": "basedNode",
+      "position": {
+        "x": 860,
+        "y": 200
+      },
+      "data": {
+        "label": "Run any LLM (prompt writer)",
+        "nodeType": "llm:openrouter_router",
+        "category": "llm",
+        "description": "Run any large language model: GPT, Claude, Gemini, and more",
+        "config": {
+          "model": "anthropic/claude-haiku-4.5",
+          "temperature": 0.7,
+          "reasoning": false
+        },
+        "params": {
+          "model": "anthropic/claude-haiku-4.5",
+          "temperature": 0.7,
+          "reasoning": false
+        }
+      }
+    },
+    {
+      "id": "image",
+      "type": "basedNode",
+      "position": {
+        "x": 1300,
+        "y": 0
+      },
+      "data": {
+        "label": "Flux Schnell",
+        "nodeType": "generate:flux_schnell",
+        "category": "generate",
+        "description": "Flux Schnell fast text-to-image",
+        "config": {
+          "num_images": 1,
+          "image_size": "landscape_4_3",
+          "output_format": "jpeg"
+        },
+        "params": {
+          "num_images": 1,
+          "image_size": "landscape_4_3",
+          "output_format": "jpeg"
+        }
+      }
+    },
+    {
+      "id": "video",
+      "type": "basedNode",
+      "position": {
+        "x": 1300,
+        "y": 400
+      },
+      "data": {
+        "label": "LTX Video",
+        "nodeType": "video:ltx_video",
+        "category": "video",
+        "description": "LTX Video text-to-video",
+        "config": {},
+        "params": {}
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "reactflow__edge-prompt-rulesout-prompt-joinin-prompt1",
+      "source": "prompt-rules",
+      "target": "join",
+      "sourceHandle": "out-prompt",
+      "targetHandle": "in-prompt1",
+      "type": "default",
+      "data": {
+        "portType": "TEXT"
+      }
+    },
+    {
+      "id": "reactflow__edge-ideaout-prompt-joinin-prompt2",
+      "source": "idea",
+      "target": "join",
+      "sourceHandle": "out-prompt",
+      "targetHandle": "in-prompt2",
+      "type": "default",
+      "data": {
+        "portType": "TEXT"
+      }
+    },
+    {
+      "id": "reactflow__edge-joinout-prompt-prompt-writerin-prompt",
+      "source": "join",
+      "target": "prompt-writer",
+      "sourceHandle": "out-prompt",
+      "targetHandle": "in-prompt",
+      "type": "default",
+      "data": {
+        "portType": "TEXT"
+      }
+    },
+    {
+      "id": "reactflow__edge-prompt-writerout-text-imagein-prompt",
+      "source": "prompt-writer",
+      "target": "image",
+      "sourceHandle": "out-text",
+      "targetHandle": "in-prompt",
+      "type": "default",
+      "data": {
+        "portType": "TEXT"
+      }
+    },
+    {
+      "id": "reactflow__edge-prompt-writerout-text-videoin-prompt",
+      "source": "prompt-writer",
+      "target": "video",
+      "sourceHandle": "out-text",
+      "targetHandle": "in-prompt",
+      "type": "default",
+      "data": {
+        "portType": "TEXT"
+      }
+    }
+  ]
+}
